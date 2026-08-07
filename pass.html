@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Strength Analyzer</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #0f172a;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 420px;
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .description {
+            text-align: center;
+            color: #cbd5e1;
+            margin-bottom: 25px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            margin-bottom: 15px;
+        }
+
+        .score {
+            text-align: center;
+            font-size: 22px;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+
+        .bar {
+            width: 100%;
+            height: 12px;
+            background: #334155;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        #strengthBar {
+            height: 100%;
+            width: 0%;
+            transition: 0.3s;
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        li {
+            margin: 8px 0;
+        }
+
+        .valid {
+            color: #22c55e;
+        }
+
+        .invalid {
+            color: #ef4444;
+        }
+
+        button {
+            width: 100%;
+            padding: 13px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 15px;
+            background: #3b82f6;
+            color: white;
+        }
+
+        button:hover {
+            background: #2563eb;
+        }
+
+        #generated {
+            margin-top: 15px;
+            padding: 12px;
+            background: #0f172a;
+            border-radius: 8px;
+            word-break: break-all;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>🔐 Password Strength Analyzer</h1>
+
+    <p class="description">
+        Check how strong your password is.
+    </p>
+
+    <input
+        type="password"
+        id="password"
+        placeholder="Enter your password"
+        oninput="checkPassword()"
+    >
+
+    <div class="score">
+        Score: <span id="score">0</span>/100
+    </div>
+
+    <div class="bar">
+        <div id="strengthBar"></div>
+    </div>
+
+    <ul id="results">
+        <li id="length">❌ At least 12 characters</li>
+        <li id="upper">❌ Uppercase letter</li>
+        <li id="lower">❌ Lowercase letter</li>
+        <li id="number">❌ Number</li>
+        <li id="special">❌ Special character</li>
+        <li id="repeat">❌ No excessive repeated characters</li>
+    </ul>
+
+    <p id="message">
+        Enter a password to analyze it.
+    </p>
+
+    <button onclick="generatePassword()">
+        Generate Strong Password
+    </button>
+
+    <div id="generated"></div>
+
+</div>
+
+<script>
+
+const commonPasswords = [
+    "password",
+    "password123",
+    "123456",
+    "12345678",
+    "qwerty",
+    "admin",
+    "admin123",
+    "welcome",
+    "letmein",
+    "iloveyou"
+];
+
+function updateItem(id, condition) {
+
+    const item = document.getElementById(id);
+
+    if (condition) {
+        item.className = "valid";
+        item.innerHTML = "✅ " + item.innerHTML.substring(2);
+    } else {
+        item.className = "invalid";
+        item.innerHTML = "❌ " + item.innerHTML.substring(2);
+    }
+}
+
+function checkPassword() {
+
+    const password = document.getElementById("password").value;
+
+    let score = 0;
+
+    const lengthOK = password.length >= 12;
+    const upperOK = /[A-Z]/.test(password);
+    const lowerOK = /[a-z]/.test(password);
+    const numberOK = /[0-9]/.test(password);
+    const specialOK = /[^A-Za-z0-9]/.test(password);
+
+    const repeatedOK = !/(.)\1\1/.test(password);
+
+    updateItem("length", lengthOK);
+    updateItem("upper", upperOK);
+    updateItem("lower", lowerOK);
+    updateItem("number", numberOK);
+    updateItem("special", specialOK);
+    updateItem("repeat", repeatedOK);
+
+    if (password.length >= 8)
+        score += 20;
+
+    if (password.length >= 12)
+        score += 15;
+
+    if (password.length >= 16)
+        score += 10;
+
+    if (upperOK)
+        score += 15;
+
+    if (lowerOK)
+        score += 10;
+
+    if (numberOK)
+        score += 10;
+
+    if (specialOK)
+        score += 15;
+
+    if (repeatedOK)
+        score += 5;
+
+    if (commonPasswords.includes(password.toLowerCase())) {
+        score = Math.min(score, 20);
+    }
+
+    document.getElementById("score").textContent = score;
+
+    const bar = document.getElementById("strengthBar");
+
+    bar.style.width = score + "%";
+
+    const message = document.getElementById("message");
+
+    if (password.length === 0) {
+        message.textContent = "Enter a password to analyze it.";
+    }
+    else if (score < 40) {
+        message.textContent =
+            "🔴 Weak password. Use a longer and more complex password.";
+    }
+    else if (score < 70) {
+        message.textContent =
+            "🟠 Moderate password. Consider adding length and complexity.";
+    }
+    else if (score < 90) {
+        message.textContent =
+            "🟢 Strong password.";
+    }
+    else {
+        message.textContent =
+            "🔵 Excellent password strength.";
+    }
+}
+
+function generatePassword() {
+
+    const characters =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
+        "abcdefghijklmnopqrstuvwxyz" +
+        "0123456789" +
+        "!@#$%^&*()_+-=[]{}";
+
+    let password = "";
+
+    for (let i = 0; i < 18; i++) {
+
+        const randomIndex =
+            Math.floor(Math.random() * characters.length);
+
+        password += characters[randomIndex];
+    }
+
+    const generated = document.getElementById("generated");
+
+    generated.style.display = "block";
+
+    generated.textContent =
+        "Generated Password: " + password;
+}
+
+</script>
+
+</body>
+</html>
+
